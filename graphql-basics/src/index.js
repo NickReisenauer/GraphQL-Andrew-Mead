@@ -1,7 +1,5 @@
-import location, { message, name, getGreeting } from "./myModule";
-import add, { subtract } from "./math";
+import { GraphQLServer } from "graphql-yoga";
 
-console.log(getGreeting("Nick"));
-console.log(message, name, location);
-console.log(add(1, 2));
-console.log(subtract(2, 1));
+// Type Definitions
+
+// Resolvers for our APIs
