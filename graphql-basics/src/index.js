@@ -43,16 +43,19 @@ const comments = [
     id: 23,
     text: "Hello this is my first comment",
     author: 3,
+    post: 2,
   },
   {
     id: 24,
     text: "Hello here's my second comment",
     author: 1,
+    post: 1,
   },
   {
     id: 25,
     text: "Elon Musk just bought 1.5 billion dollars worth of Bitcoin",
     author: 2,
+    post: 3,
   },
 ];
 
@@ -93,6 +96,7 @@ const typeDefs = `
    id: ID!
    text: String!
    author: User!
+   post: Post!
  }
 `;
 
@@ -156,6 +160,10 @@ const resolvers = {
   Comment: {
     author(parent, args, ctx, info) {
       return users.find((user) => user.id === parent.author);
+    },
+
+    post(parent, args, ctx, info) {
+      return posts.find((post) => post.id === parent.post);
     },
   },
 };
