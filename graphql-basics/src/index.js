@@ -37,6 +37,25 @@ const posts = [
   },
 ];
 
+// Demo comment data
+const comments = [
+  {
+    id: 23,
+    text: "Hello this is my first comment",
+    author: 3,
+  },
+  {
+    id: 24,
+    text: "Hello here's my second comment",
+    author: 1,
+  },
+  {
+    id: 25,
+    text: "Elon Musk just bought 1.5 billion dollars worth of Bitcoin",
+    author: 2,
+  },
+];
+
 // String
 // Boolean
 // Int
@@ -49,6 +68,8 @@ const typeDefs = `
    users(query: String): [User!]!
    me: User!
    posts(query: String): [Post!]!
+   comments: [Comment!]!
+   post: Post!
  }
 
  type User {
@@ -56,6 +77,8 @@ const typeDefs = `
    name: String!
    email: String!
    age: Int
+   posts: [Post!]!
+   comments: [Comment!]!
  }
 
  type Post {
@@ -63,6 +86,12 @@ const typeDefs = `
    title: String!
    body: String!
    published: Boolean!
+   author: User!
+ }
+
+ type Comment {
+   id: ID!
+   text: String!
    author: User!
  }
 `;
@@ -98,9 +127,32 @@ const resolvers = {
         return isTitleMatch || isBodyMatch;
       });
     },
+
+    comments(parent, args, ctx, info) {
+      return comments;
+    },
   },
 
   Post: {
+    author(parent, args, ctx, info) {
+      return users.find((user) => user.id === parent.author);
+    },
+  },
+
+  User: {
+    posts(parent, args, ctx, info) {
+      return posts.filter((post) => {
+        return post.author === parent.id;
+      });
+    },
+    comments(parent, args, ctx, info) {
+      return comments.filter((comment) => {
+        return comment.author === parent.id;
+      });
+    },
+  },
+
+  Comment: {
     author(parent, args, ctx, info) {
       return users.find((user) => user.id === parent.author);
     },
