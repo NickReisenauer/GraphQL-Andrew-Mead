@@ -1,69 +1,78 @@
 import { GraphQLServer } from "graphql-yoga";
+import uuidv4 from "uuid/v4";
+
+// Scalar types - String, Boolean, Int, Float, ID
 
 // Demo user data
 const users = [
   {
-    id: 1,
-    name: "Nick",
-    email: "nick@example.com",
-    age: 18,
+    id: "1",
+    name: "Andrew",
+    email: "andrew@example.com",
+    age: 27,
   },
-  { id: 2, name: "Andrew", email: "andrew@example.com", age: 27 },
-  { id: 3, name: "Mike", email: "mike@example.com" },
+  {
+    id: "2",
+    name: "Sarah",
+    email: "sarah@example.com",
+  },
+  {
+    id: "3",
+    name: "Mike",
+    email: "mike@example.com",
+  },
 ];
 
-// Demo post data
 const posts = [
   {
-    id: 1,
-    title: "AirPods",
-    body: "Apple AirPods Pro",
+    id: "10",
+    title: "GraphQL 101",
+    body: "This is how to use GraphQL...",
     published: true,
-    author: 1,
+    author: "1",
   },
   {
-    id: 2,
-    title: "MacBook",
-    body: "Apple MacBook Pro",
-    published: true,
-    author: 2,
-  },
-  {
-    id: 3,
-    title: "Tesla Roadster",
-    body: "The 2022 Tesla Roadster: Coming Soon",
+    id: "11",
+    title: "GraphQL 201",
+    body: "This is an advanced GraphQL post...",
     published: false,
-    author: 1,
+    author: "1",
+  },
+  {
+    id: "12",
+    title: "Programming Music",
+    body: "",
+    published: true,
+    author: "2",
   },
 ];
 
-// Demo comment data
 const comments = [
   {
-    id: 23,
-    text: "Hello this is my first comment",
-    author: 3,
-    post: 2,
+    id: "102",
+    text: "This worked well for me. Thanks!",
+    author: "3",
+    post: "10",
   },
   {
-    id: 24,
-    text: "Hello here's my second comment",
-    author: 1,
-    post: 1,
+    id: "103",
+    text: "Glad you enjoyed it.",
+    author: "1",
+    post: "10",
   },
   {
-    id: 25,
-    text: "Elon Musk just bought 1.5 billion dollars worth of Bitcoin",
-    author: 2,
-    post: 3,
+    id: "104",
+    text: "This did no work.",
+    author: "2",
+    post: "11",
+  },
+  {
+    id: "105",
+    text: "Nevermind. I got it to work.",
+    author: "1",
+    post: "11",
   },
 ];
-
-// String
-// Boolean
-// Int
-// Float
-// ID
 
 // Type Definitions
 const typeDefs = `
@@ -73,6 +82,31 @@ const typeDefs = `
    posts(query: String): [Post!]!
    comments: [Comment!]!
    post: Post!
+ }
+
+ type Mutation {
+   createUser(data: CreateUserInput!): User!
+   createPost(data: CreatePostInput!): Post!
+   createComment(data: CreateCommentInput!): Comment!
+ }
+ 
+ input CreateUserInput {
+   name: String!
+   email: String!
+   age: Int
+ }
+
+ input CreatePostInput {
+   title: String!
+   body: String!
+   published: Boolean!
+   author: ID!
+ }
+
+ input CreateCommentInput {
+   text: String!
+   author: ID!
+   post: ID!
  }
 
  type User {
@@ -90,6 +124,7 @@ const typeDefs = `
    body: String!
    published: Boolean!
    author: User!
+   comments: [Comment!]!
  }
 
  type Comment {
@@ -137,9 +172,60 @@ const resolvers = {
     },
   },
 
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const emailTaken = users.some((user) => user.email === args.data.email);
+      if (emailTaken) throw new Error("Email taken.");
+
+      const user = {
+        id: uuidv4(),
+        ...args.data,
+      };
+
+      users.push(user);
+      return user;
+    },
+
+    createPost(parent, args, ctx, info) {
+      const userExists = users.some((user) => user.id === args.data.author);
+      if (!userExists) throw new Error("User does not exist.");
+
+      const post = {
+        id: uuidv4(),
+        ...args.data,
+      };
+
+      posts.push(post);
+      return post;
+    },
+
+    createComment(parent, args, ctx, info) {
+      const userExists = users.some((user) => user.id === args.data.author);
+      const postExists = posts.some(
+        (post) => post.id === args.data.post && post.published
+      );
+      if (!userExists || !postExists)
+        throw new Error("Unable to find user and post");
+
+      const comment = {
+        id: uuidv4(),
+        ...args.data,
+      };
+
+      comments.push(comment);
+      return comment;
+    },
+  },
+
   Post: {
     author(parent, args, ctx, info) {
       return users.find((user) => user.id === parent.author);
+    },
+
+    comments(parent, args, ctx, info) {
+      return comments.filter((comment) => {
+        return comment.post === parent.id;
+      });
     },
   },
 
