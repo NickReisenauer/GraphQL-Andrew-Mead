@@ -14,6 +14,21 @@ const Mutation = {
     return user;
   },
 
+  updateUser(parent, args, { db }, info) {
+    const user = db.users.find((user) => user.id === args.id);
+    if (!user) throw new Error("User not found.");
+    if (typeof args.data.email === "string") {
+      const emailTaken = db.users.some((user) => user.email === data.email);
+      if (emailTaken) throw new Error("Email address already in use.");
+      user.email = data.email;
+    }
+
+    if (typeof args.data.name === "string") user.name = args.data.name;
+    if (typeof args.data.age !== "undefined") user.age = args.data.age;
+
+    return user;
+  },
+
   createPost(parent, args, { db }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
     if (!userExists) throw new Error("User does not exist.");
@@ -24,6 +39,17 @@ const Mutation = {
     };
 
     db.posts.push(post);
+    return post;
+  },
+
+  updatePost(parent, args, { db }, info) {
+    const post = db.posts.find((post) => post.id === args.id);
+    if (!post) throw new Error("No post found.");
+    if (typeof args.data.title === "string") post.title = args.data.title;
+    if (typeof args.data.body === "string") post.body = args.data.body;
+    if (typeof args.data.published === "boolean")
+      post.published = args.data.published;
+
     return post;
   },
 
@@ -41,6 +67,14 @@ const Mutation = {
     };
 
     db.comments.push(comment);
+    return comment;
+  },
+
+  updateComment(parent, args, { db }, info) {
+    const comment = db.comments.find((comment) => comment.id === args.id);
+    if (!comment) throw new Error("Cannot find comment.");
+    if (typeof args.data.text === "string") comment.text = args.data.text;
+
     return comment;
   },
 
