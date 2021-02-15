@@ -1,3 +1,4 @@
+import { PubSub } from "graphql-yoga";
 import uuidv4 from "uuid/v4";
 
 const Mutation = {
@@ -42,19 +43,47 @@ const Mutation = {
 
     if (args.data.published) {
       pubsub.publish("post", {
-        post,
+        post: {
+          mutation: "CREATED",
+          data: post,
+        },
       });
     }
     return post;
   },
 
-  updatePost(parent, args, { db }, info) {
+  updatePost(parent, args, { db, pubsub }, info) {
     const post = db.posts.find((post) => post.id === args.id);
+    const originalPost = { ...post };
+
     if (!post) throw new Error("No post found.");
     if (typeof args.data.title === "string") post.title = args.data.title;
     if (typeof args.data.body === "string") post.body = args.data.body;
-    if (typeof args.data.published === "boolean")
+    if (typeof args.data.published === "boolean") {
       post.published = args.data.published;
+      if (originalPost.published === true && !post.published) {
+        pubsub.publish("post", {
+          post: {
+            mutation: "DELETED",
+            data: originalPost,
+          },
+        });
+      } else if (!originalPost.published && post.published) {
+        pubsub.published("post", {
+          post: {
+            mutation: "CREATED",
+            data: post,
+          },
+        });
+      }
+    } else if (post.publish) {
+      pubsub.published("post", {
+        post: {
+          mutation: "UPDATED",
+          data: post,
+        },
+      });
+    }
 
     return post;
   },
@@ -107,14 +136,23 @@ const Mutation = {
     return deletedUsers[0];
   },
 
-  deletePost(parent, args, { db }, info) {
+  deletePost(parent, args, { db, pubsub }, info) {
     const postIndex = db.posts.findIndex((post) => post.id === args.id);
     if (postIndex === -1) throw new Error("Post not found");
-    const deletedPosts = db.posts.splice(postIndex, 1);
+    const [post] = db.posts.splice(postIndex, 1);
 
     db.comments = db.comments.filter((comment) => comment.post !== args.id);
 
-    return deletedPosts[0];
+    if (post.published) {
+      pubsub.publish("post", {
+        post: {
+          mutation: "DELETED",
+          data: post,
+        },
+      });
+    }
+
+    return post;
   },
 
   deleteComment(parent, args, { db }, info) {
