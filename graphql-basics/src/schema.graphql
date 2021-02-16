@@ -1,3 +1,16 @@
+# ENUM
+# 1. An Enum is a type that defines a set of constants.
+# 2. This type can then be used as the type for a field (similar to scalar and custom object types).
+# 3. Values for the field must be one of the constants for the type
+
+# UserRole - standard, editor, admin
+
+# type User {
+#  role: UserRole!
+# }
+
+# Think of an Enum as like a custom boolean type. Instead of just true or false, we can create our own states that have to be one of the available.
+
 type Query {
   users(query: String): [User!]!
   me: User!
@@ -84,12 +97,18 @@ type Comment {
   post: Post!
 }
 
+enum MutationType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
 type PostSubscriptionPayload {
-  mutation: String!
+  mutation: MutationType!
   data: Post!
 }
 
 type CommentSubscriptionPayload {
-  mutation: String!
+  mutation: MutationType!
   data: Comment!
 }
